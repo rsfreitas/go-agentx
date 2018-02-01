@@ -26,7 +26,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/posteo/go-agentx/value"
+	"github.com/vadimipatov/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
 

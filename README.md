@@ -24,9 +24,9 @@ import (
 
 	"gopkg.in/errgo.v1"
 
-	"github.com/posteo/go-agentx"
-	"github.com/posteo/go-agentx/pdu"
-	"github.com/posteo/go-agentx/value"
+	"github.com/vadimipatov/go-agentx"
+	"github.com/vadimipatov/go-agentx/pdu"
+	"github.com/vadimipatov/go-agentx/value"
 )
 
 func main() {

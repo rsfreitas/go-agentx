@@ -23,7 +23,7 @@ package agentx_test
 import (
 	"testing"
 
-	. "github.com/posteo/go-agentx/test"
+	. "github.com/vadimipatov/go-agentx/test"
 )
 
 func TestSessionOpen(t *testing.T) {

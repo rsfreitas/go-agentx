@@ -26,8 +26,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/posteo/go-agentx"
-	"github.com/posteo/go-agentx/value"
+	"github.com/vadimipatov/go-agentx"
+	"github.com/vadimipatov/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
 
