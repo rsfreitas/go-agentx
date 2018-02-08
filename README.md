@@ -1,4 +1,5 @@
 # AgentX
+This is fork of [go-agentx library](https://github.com/posteo/go-agentx) with traps support.
 
 A library with a pure Go implementation of the [AgentX-Protocol](http://tools.ietf.org/html/rfc2741). The library is not yet feature-complete, but should be far enough to used in a production environment.
 
@@ -6,7 +7,7 @@ The AgentX-Protocol can be used to extend a snmp-daemon such that it dispatches 
 
 ## State
 
-The library implements all variable types (Integer, OctetString, Null, ObjectIdentifier, IPAddress, Counter32, Gauge32, TimeTicks, Opaque, Counter64, NoSuchObject, NoSuchInstance, EndOfMIBView), but only some of the requests (Get, GetNext, GetBulk). Set-requests and Traps are not implemented yet.
+The library implements all variable types (Integer, OctetString, Null, ObjectIdentifier, IPAddress, Counter32, Gauge32, TimeTicks, Opaque, Counter64, NoSuchObject, NoSuchInstance, EndOfMIBView), but only some of the requests (Get, GetNext, GetBulk, Notify). Set-requests are not implemented yet.
 
 ## Helper
 
@@ -94,6 +95,15 @@ func main() {
 		log.Fatalf(errgo.Details(err))
 	}
 
+	var vb pdu.Variables
+	vb.Add(value.MustParseOID("1.3.6.1.2.1.1.3.0"), pdu.VariableTypeTimeTicks, 45 * time.Second)
+	vb.Add(value.MustParseOID("1.3.6.1.6.3.1.1.4.1.0"), pdu.VariableTypeObjectIdentifier, "1.3.6.1.6.3.1.1.4.3.0.1.3.6.1.6.3.1.1.5.1") // required
+	vb.Add(value.MustParseOID("1.3.6.1.4.1.45995.3.11"), pdu.VariableTypeInteger, int32(42))
+
+	if err := session.Notify(vb); err != nil {
+		log.Fatalf(errgo.Details(err))
+	}
+
 	for {
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -104,6 +114,10 @@ func main() {
 
 If the connection to the snmp-daemon is lost, the client tries to reconnect. Therefor the property `ReconnectInterval` has be set. It specifies a duration that is waited before a re-connect is tried.
 If the client has open session or registrations, the client try to re-establish both on a successful re-connect.
+
+## Known issues
+
+Unmarshalling of response variables is not working properly and temporarily disabled
 
 ## Project
 
