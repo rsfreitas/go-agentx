@@ -171,11 +171,11 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 			if _, err := reader.Read(packetBytes); err != nil {
 				panic(err)
 			}
-
-			if err := packet.UnmarshalBinary(packetBytes); err != nil {
-				panic(err)
-			}
-
+			// if header.Flags & pdu.FlagReserved1 == 0 {
+				if err := packet.UnmarshalBinary(packetBytes); err != nil {
+					panic(err)
+				}
+			// } else: Notify response
 			rx <- &pdu.HeaderPacket{Header: header, Packet: packet}
 		}
 	}()

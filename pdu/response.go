@@ -74,9 +74,11 @@ func (r *Response) UnmarshalBinary(data []byte) error {
 	if err := binary.Read(buffer, binary.LittleEndian, &r.Index); err != nil {
 		return errgo.Mask(err)
 	}
-	if err := r.Variables.UnmarshalBinary(data[8:]); err != nil {
-		return errgo.Mask(err)
-	}
+
+	// TODO: Unmarshal variables when response received
+	// if err := r.Variables.UnmarshalBinary(data[8:]); err != nil {
+	// 	return errgo.Mask(err)
+	// }
 
 	return nil
 }

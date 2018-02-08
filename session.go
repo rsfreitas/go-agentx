@@ -88,6 +88,19 @@ func (s *Session) Unregister(priority byte, baseOID value.OID) error {
 	return nil
 }
 
+// Notify sends the notification request with provided payload to master agent
+func (s *Session) Notify(Variables pdu.Variables) error {
+	requestPacket := &pdu.Notify{Variables: Variables}
+	request := &pdu.HeaderPacket{Header: &pdu.Header{}, Packet: requestPacket}
+	//request := &pdu.HeaderPacket{Header: &pdu.Header{Flags: pdu.FlagReserved1}, Packet: requestPacket}
+
+	response := s.request(request)
+	if err := checkError(response); err != nil {
+		return errgo.Mask(err)
+	}
+	return nil
+}
+
 // Close tears down the session with the master agent.
 func (s *Session) Close() error {
 	requestPacket := &pdu.Close{Reason: pdu.ReasonShutdown}

@@ -32,6 +32,9 @@ const (
 	FlagAnyIndex             Flags = 1 << 2
 	FlagNonDefaultContext    Flags = 1 << 3
 	FlagNetworkByteOrder     Flags = 1 << 4
+	//FlagReserved1		     Flags = 1 << 5
+	//FlagReserved2		     Flags = 1 << 6
+	//FlagReserved3		     Flags = 1 << 7
 )
 
 // Flags defines pdu packet flags.
@@ -54,6 +57,15 @@ func (f Flags) String() string {
 	if f&FlagNetworkByteOrder != 0 {
 		result = append(result, "FlagNetworkByteOrder")
 	}
+	//if f&FlagReserved1 != 0 {
+	//	result = append(result, "FlagReserved1")
+	//}
+	//if f&FlagReserved2 != 0 {
+	//	result = append(result, "FlagReserved2")
+	//}
+	//if f&FlagReserved3 != 0 {
+	//	result = append(result, "FlagReserved3")
+	//}
 	if len(result) == 0 {
 		return "(FlagNone)"
 	}
