@@ -28,6 +28,6 @@ import (
 // Handler defines an interface for a handler of events that
 // might occure during a session.
 type Handler interface {
-	Get(value.OID) (value.OID, pdu.VariableType, interface{}, error)
-	GetNext(value.OID, bool, value.OID) (value.OID, pdu.VariableType, interface{}, error)
+	Get(value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
+	GetNext(value.OID, bool, value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
 }
