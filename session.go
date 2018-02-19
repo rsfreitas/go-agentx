@@ -51,7 +51,7 @@ func (s *Session) ID() uint32 {
 // on the master agent.
 func (s *Session) Register(priority byte, baseOID value.OID) error {
 	if s.registerRequestPacket != nil {
-		return errgo.Newf("session is already registered")
+		return errgo.Newf("session %d is already registered", s.sessionID)
 	}
 
 	requestPacket := &pdu.Register{}
@@ -71,7 +71,7 @@ func (s *Session) Register(priority byte, baseOID value.OID) error {
 // Unregister removes the registration for the provided subtree.
 func (s *Session) Unregister(priority byte, baseOID value.OID) error {
 	if s.registerRequestPacket == nil {
-		return errgo.Newf("session is not registered")
+		return errgo.Newf("session %d is not registered", s.sessionID)
 	}
 
 	requestPacket := &pdu.Unregister{}
@@ -153,6 +153,7 @@ func (s *Session) request(hp *pdu.HeaderPacket) *pdu.HeaderPacket {
 }
 
 func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
+
 	responseHeader := &pdu.Header{}
 	responseHeader.SessionID = request.Header.SessionID
 	responseHeader.TransactionID = request.Header.TransactionID
@@ -162,7 +163,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 	switch requestPacket := request.Packet.(type) {
 	case *pdu.Get:
 		if s.Handler == nil {
-			log.Printf("warning: no handler for session specified")
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
 			responsePacket.Variables.Add(requestPacket.GetOID(), pdu.VariableTypeNull, nil)
 		} else {
 			oid, t, v, err := s.Handler.Get(requestPacket.GetOID(), request.Header)
@@ -178,7 +179,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		}
 	case *pdu.GetNext:
 		if s.Handler == nil {
-			log.Printf("warning: no handler for session specified")
+			log.Printf("warning: no handler for session %d specified",s.sessionID)
 		} else {
 			for _, sr := range requestPacket.SearchRanges {
 				oid, t, v, err := s.Handler.GetNext(sr.From.GetIdentifier(), (sr.From.Include == 1), sr.To.GetIdentifier(), request.Header)

@@ -137,11 +137,11 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 							for _, session := range c.sessions {
 								delete(c.sessions, session.ID())
 								if err := session.reopen(); err != nil {
-									log.Printf("error during reopen session: %s", errgo.Details(err))
+									log.Printf("error during reopen session %d: %s", session.sessionID, errgo.Details(err))
 									return
 								}
 								c.sessions[session.ID()] = session
-								log.Printf("successful re-connected")
+								log.Printf("successful re-connected [%d]", session.sessionID)
 							}
 						}()
 						continue mainLoop
