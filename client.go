@@ -193,7 +193,7 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				}
 
 			if debug {
-				log.Printf("Recieved [s:%d,t:%d,p:%d,%s]", header.SessionID, header.TransactionID, header.PacketID, header.Type)
+				log.Printf("Received [s:%d,t:%d,p:%d,%s]", header.SessionID, header.TransactionID, header.PacketID, header.Type)
 			}
 			// } else: Notify response
 			rx <- &pdu.HeaderPacket{Header: header, Packet: packet}
