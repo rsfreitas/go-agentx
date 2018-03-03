@@ -27,11 +27,15 @@ import (
 	"net"
 	"strings"
 	"time"
-
+	"os"
+	"sync"
 	"github.com/vadimipatov/go-agentx/pdu"
 	"github.com/vadimipatov/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
+
+
+var debug bool = (os.Getenv("SNMPGW_DEBUG_AGENTX") == "1")
 
 // Client defines an agentx client.
 type Client struct {
@@ -45,6 +49,9 @@ type Client struct {
 	connection  net.Conn
 	requestChan chan *request
 	sessions    map[uint32]*Session
+
+	cMutex sync.RWMutex
+	sMutex sync.RWMutex
 }
 
 // Open sets up the client.
@@ -95,7 +102,9 @@ func (c *Client) runTransmitter() chan *pdu.HeaderPacket {
 				log.Printf(errgo.Details(err))
 				continue
 			}
+			c.cMutex.Lock()
 			writer := bufio.NewWriter(c.connection)
+			c.cMutex.Unlock()
 			if _, err := writer.Write(headerPacketBytes); err != nil {
 				log.Printf(errgo.Details(err))
 				continue
@@ -103,6 +112,9 @@ func (c *Client) runTransmitter() chan *pdu.HeaderPacket {
 			if err := writer.Flush(); err != nil {
 				log.Printf(errgo.Details(err))
 				continue
+			}
+			if debug {
+				log.Printf("Transmitted [s:%d,t:%d,p:%d,%s]", headerPacket.Header.SessionID, headerPacket.Header.TransactionID, headerPacket.Header.PacketID, headerPacket.Header.Type)
 			}
 		}
 	}()
@@ -122,26 +134,30 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				if opErr, ok := err.(*net.OpError); ok && strings.HasSuffix(opErr.Error(), "use of closed network connection") {
 					return
 				}
-				if err == io.EOF {
-					log.Printf("lost connection - try to re-connect ...")
+				if err == io.EOF || strings.Contains(err.Error(), "connection reset by peer") {
+					log.Printf("lost connection - try to re-connect [%s] ...", c.Name)
 				reopenLoop:
 					for {
 						time.Sleep(c.ReconnectInterval)
 						connection, err := net.Dial(c.Net, c.Address)
 						if err != nil {
-							log.Printf("try to reconnect: %s", errgo.Details(err))
+							log.Printf("try to reconnect [%s]: %s", c.Name, errgo.Details(err))
 							continue reopenLoop
 						}
+						c.cMutex.Lock()
 						c.connection = connection
+						c.cMutex.Unlock()
 						go func() {
+							c.sMutex.Lock()
+							defer c.sMutex.Unlock()
 							for _, session := range c.sessions {
 								delete(c.sessions, session.ID())
 								if err := session.reopen(); err != nil {
-									log.Printf("error during reopen session %d: %s", session.sessionID, errgo.Details(err))
+									log.Printf("error during reopen session [%s, sid: %d]: %s", c.Name, session.sessionID, errgo.Details(err))
 									return
 								}
 								c.sessions[session.ID()] = session
-								log.Printf("successful re-connected [%d]", session.sessionID)
+								log.Printf("successful re-connected [%s, sid: %d]", c.Name, session.sessionID)
 							}
 						}()
 						continue mainLoop
@@ -175,6 +191,10 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				if err := packet.UnmarshalBinary(packetBytes); err != nil {
 					panic(err)
 				}
+
+			if debug {
+				log.Printf("Recieved [s:%d,t:%d,p:%d,%s]", header.SessionID, header.TransactionID, header.PacketID, header.Type)
+			}
 			// } else: Notify response
 			rx <- &pdu.HeaderPacket{Header: header, Packet: packet}
 		}
@@ -205,7 +225,9 @@ func (c *Client) runDispatcher(tx, rx chan *pdu.HeaderPacket) {
 					responseChan <- headerPacket
 					delete(responseChans, packetID)
 				} else {
+					c.sMutex.RLock()
 					session, ok := c.sessions[headerPacket.Header.SessionID]
+					c.sMutex.RUnlock()
 					if ok {
 						tx <- session.handle(headerPacket)
 					} else {
