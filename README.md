@@ -99,7 +99,7 @@ func main() {
 	TrapOID := "1.3.6.1.4.1.45995.3"
 	payload.Add(value.MustParseOID("1.3.6.1.2.1.1.3.0"), pdu.VariableTypeTimeTicks, time.Since(startTime)) // uptime
 	payload.Add(value.MustParseOID("1.3.6.1.6.3.1.1.4.1.0"), pdu.VariableTypeObjectIdentifier, "1.3.6.1.6.3.1.1.4.3.0."+TrapOID) // SNMPTRAP -> ENTERPRISE.OID
-    payload.Add(value.MustParseOID(TrapOID+".11), pdu.VariableTypeInteger, int32(42))
+        payload.Add(value.MustParseOID(TrapOID+".11), pdu.VariableTypeInteger, int32(42))
 
 	if err := session.Notify(payload); err != nil {
 		log.Fatalf(errgo.Details(err))
