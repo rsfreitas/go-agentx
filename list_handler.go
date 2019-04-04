@@ -24,8 +24,8 @@ import (
 	"bytes"
 	"sort"
 
-	"github.com/vadimipatov/go-agentx/pdu"
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx/pdu"
+	"github.com/rsfreitas/go-agentx/value"
 )
 
 // ListHandler is a helper that takes a list of oids and implements

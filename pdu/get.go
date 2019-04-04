@@ -20,7 +20,7 @@ USA
 
 package pdu
 
-import "github.com/vadimipatov/go-agentx/value"
+import "github.com/rsfreitas/go-agentx/value"
 
 // Get defines the pdu get packet.
 type Get struct {

@@ -20,7 +20,7 @@ USA
 
 package agentx
 
-import "github.com/vadimipatov/go-agentx/pdu"
+import "github.com/rsfreitas/go-agentx/pdu"
 
 type request struct {
 	headerPacket *pdu.HeaderPacket

@@ -26,7 +26,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
 
@@ -140,11 +140,7 @@ func (v *Variable) UnmarshalBinary(data []byte) error {
 
 	switch v.Type {
 	case VariableTypeInteger:
-		value := int32(0)
-		if err := binary.Read(buffer, binary.LittleEndian, &value); err != nil {
-			return errgo.Mask(err)
-		}
-		v.Value = value
+		v.Value = int32(binary.LittleEndian.Uint32(data[offset:]))
 	case VariableTypeOctetString:
 		octetString := &OctetString{}
 		if err := octetString.UnmarshalBinary(data[offset:]); err != nil {
@@ -166,16 +162,9 @@ func (v *Variable) UnmarshalBinary(data []byte) error {
 		}
 		v.Value = net.IP(octetString.Text)
 	case VariableTypeCounter32, VariableTypeGauge32:
-		value := uint32(0)
-		if err := binary.Read(buffer, binary.LittleEndian, &value); err != nil {
-			return errgo.Mask(err)
-		}
-		v.Value = value
+		v.Value = binary.LittleEndian.Uint32(data[offset:])
 	case VariableTypeTimeTicks:
-		value := uint32(0)
-		if err := binary.Read(buffer, binary.LittleEndian, &value); err != nil {
-			return errgo.Mask(err)
-		}
+		value := binary.LittleEndian.Uint32(data[offset:])
 		v.Value = time.Duration(value) * time.Second / 100
 	case VariableTypeOpaque:
 		octetString := &OctetString{}
@@ -184,11 +173,7 @@ func (v *Variable) UnmarshalBinary(data []byte) error {
 		}
 		v.Value = []byte(octetString.Text)
 	case VariableTypeCounter64:
-		value := uint64(0)
-		if err := binary.Read(buffer, binary.LittleEndian, &value); err != nil {
-			return errgo.Mask(err)
-		}
-		v.Value = value
+		v.Value = binary.LittleEndian.Uint64(data[offset:])
 	default:
 		return errgo.Newf("unhandled variable type %s", v.Type)
 	}

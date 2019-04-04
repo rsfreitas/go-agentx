@@ -25,6 +25,19 @@ import "fmt"
 // The various pdu packet errors.
 const (
 	ErrorNone                  Error = 0
+	ErrorGenErr                Error = 5
+	ErrorNoAccess              Error = 6
+	ErrorWrongType             Error = 7
+	ErrorWrongLength           Error = 8
+	ErrorWrongEncoding         Error = 9
+	ErrorWrongValue            Error = 10
+	ErrorNoCreation            Error = 11
+	ErrorInconsistentValue     Error = 12
+	ErrorResourceUnavailable   Error = 13
+	ErrorCommitFailed          Error = 14
+	ErrorUndoFailed            Error = 15
+	ErrorNotWritable           Error = 17
+	ErrorInconsistentName      Error = 18
 	ErrorOpenFailed            Error = 256
 	ErrorNotOpen               Error = 257
 	ErrorIndexWrongType        Error = 258
@@ -73,6 +86,32 @@ func (e Error) String() string {
 		return "ErrorRequestDenied"
 	case ErrorProcessing:
 		return "ErrorProcessing"
+	case ErrorGenErr:
+		return "ErrorGenErr"
+	case ErrorNoAccess:
+		return "ErrorNoAccess"
+	case ErrorWrongType:
+		return "ErrorWrongType"
+	case ErrorWrongLength:
+		return "ErrorWrongLength"
+	case ErrorWrongEncoding:
+		return "ErrorWrongEncoding"
+	case ErrorWrongValue:
+		return "ErrorWrongValue"
+	case ErrorNoCreation:
+		return "ErrorNoCreation"
+	case ErrorInconsistentValue:
+		return "ErrorInconsistentValue"
+	case ErrorResourceUnavailable:
+		return "ErrorResourceUnavailable"
+	case ErrorCommitFailed:
+		return "ErrorCommitFailed"
+	case ErrorUndoFailed:
+		return "ErrorUndoFailed"
+	case ErrorNotWritable:
+		return "ErrorNotWritable"
+	case ErrorInconsistentName:
+		return "ErrorInconsistentName"
 	}
 	return fmt.Sprintf("ErrorUnknown (%d)", e)
 }

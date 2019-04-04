@@ -18,38 +18,32 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 USA
 */
 
-package agentx_test
+package pdu
 
-import (
-	"testing"
-
-	. "github.com/rsfreitas/go-agentx/test"
-)
-
-func TestSessionOpen(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-	defer session.Close()
-
-	AssertNotEquals(t, 0, session.ID())
+// TestSet defines the pdu set packet
+type TestSet struct {
+	varbind Variables
 }
 
-func TestSessionClose(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-
-	err = session.Close()
-	AssertNoError(t, err)
+// Type returns the pdu packet type.
+func (s *TestSet) Type() Type {
+	return TypeTestSet
 }
 
-func TestSessionRegistration(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-	defer session.Close()
+func (s *TestSet) Variables() Variables {
+	return s.varbind
+}
 
-	AssertNoError(t,
-		session.Register(127, baseOID))
+// MarshalBinary returns the pdu packet as a slice of bytes.
+func (s *TestSet) MarshalBinary() ([]byte, error) {
+	return []byte{}, nil
+}
 
-	AssertNoError(t,
-		session.Unregister(127, baseOID))
+// UnmarshalBinary sets the packet structure from the provided slice of bytes.
+func (s *TestSet) UnmarshalBinary(data []byte) error {
+	if err := s.varbind.UnmarshalBinary(data); err != nil {
+		return err
+	}
+
+	return nil
 }

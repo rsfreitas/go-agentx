@@ -25,8 +25,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/vadimipatov/go-agentx/pdu"
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx/pdu"
+	"github.com/rsfreitas/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
 
@@ -179,7 +179,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		}
 	case *pdu.GetNext:
 		if s.Handler == nil {
-			log.Printf("warning: no handler for session %d specified",s.sessionID)
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
 			for _, sr := range requestPacket.SearchRanges {
 				oid, t, v, err := s.Handler.GetNext(sr.From.GetIdentifier(), (sr.From.Include == 1), sr.To.GetIdentifier(), request.Header)
@@ -195,6 +195,63 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 				}
 			}
 		}
+
+	case *pdu.TestSet:
+		if s.Handler == nil {
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
+		} else {
+			reply, err := s.Handler.TestSet(requestPacket.Variables(), request.Header)
+
+			if err != nil {
+				log.Printf("error while handling packet: %s", errgo.Details(err))
+				responsePacket.Error = pdu.ErrorProcessing
+			} else {
+				responsePacket.Error = reply
+			}
+		}
+
+	case *pdu.CleanupSet:
+		if s.Handler == nil {
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
+		} else {
+			reply, err := s.Handler.CleanupSet(request.Header)
+
+			if err != nil {
+				log.Printf("error while handling packet: %s", errgo.Details(err))
+				responsePacket.Error = pdu.ErrorProcessing
+			} else if reply != pdu.ErrorNone {
+				responsePacket.Error = reply
+			}
+		}
+
+	case *pdu.CommitSet:
+		if s.Handler == nil {
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
+		} else {
+			reply, err := s.Handler.CommitSet(request.Header)
+
+			if err != nil {
+				log.Printf("error while handling packet: %s", errgo.Details(err))
+				responsePacket.Error = pdu.ErrorProcessing
+			} else if reply != pdu.ErrorNone {
+				responsePacket.Error = reply
+			}
+		}
+
+	case *pdu.UndoSet:
+		if s.Handler == nil {
+			log.Printf("warning: no handler for session %d specified", s.sessionID)
+		} else {
+			reply, err := s.Handler.UndoSet(request.Header)
+
+			if err != nil {
+				log.Printf("error while handling packet: %s", errgo.Details(err))
+				responsePacket.Error = pdu.ErrorProcessing
+			} else if reply != pdu.ErrorNone {
+				responsePacket.Error = reply
+			}
+		}
+
 	default:
 		log.Printf("cannot handle unrequested packet: %v", request)
 		responsePacket.Error = pdu.ErrorProcessing

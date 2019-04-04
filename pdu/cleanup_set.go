@@ -18,38 +18,19 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
 USA
 */
 
-package agentx_test
+package pdu
 
-import (
-	"testing"
+type CleanupSet struct{}
 
-	. "github.com/rsfreitas/go-agentx/test"
-)
-
-func TestSessionOpen(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-	defer session.Close()
-
-	AssertNotEquals(t, 0, session.ID())
+func (c *CleanupSet) UnmarshalBinary(data []byte) error {
+	// We have no data to parse since we only get the header
+	return nil
 }
 
-func TestSessionClose(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-
-	err = session.Close()
-	AssertNoError(t, err)
+func (c *CleanupSet) MarshalBinary() ([]byte, error) {
+	return []byte{}, nil
 }
 
-func TestSessionRegistration(t *testing.T) {
-	session, err := e.client.Session()
-	AssertNoError(t, err)
-	defer session.Close()
-
-	AssertNoError(t,
-		session.Register(127, baseOID))
-
-	AssertNoError(t,
-		session.Unregister(127, baseOID))
+func (c *CleanupSet) Type() Type {
+	return TypeCleanupSet
 }

@@ -25,15 +25,15 @@ import (
 	"io"
 	"log"
 	"net"
-	"strings"
-	"time"
 	"os"
+	"strings"
 	"sync"
-	"github.com/vadimipatov/go-agentx/pdu"
-	"github.com/vadimipatov/go-agentx/value"
+	"time"
+
+	"github.com/rsfreitas/go-agentx/pdu"
+	"github.com/rsfreitas/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
-
 
 var debug bool = (os.Getenv("SNMPGW_DEBUG_AGENTX") == "1")
 
@@ -179,6 +179,14 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				packet = &pdu.Get{}
 			case pdu.TypeGetNext:
 				packet = &pdu.GetNext{}
+			case pdu.TypeTestSet:
+				packet = &pdu.TestSet{}
+			case pdu.TypeCleanupSet:
+				packet = &pdu.CleanupSet{}
+			case pdu.TypeCommitSet:
+				packet = &pdu.CommitSet{}
+			case pdu.TypeUndoSet:
+				packet = &pdu.UndoSet{}
 			default:
 				log.Printf("unhandled packet of type %s", header.Type)
 			}
@@ -187,15 +195,19 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 			if _, err := reader.Read(packetBytes); err != nil {
 				panic(err)
 			}
-			// if header.Flags & pdu.FlagReserved1 == 0 {
-				if err := packet.UnmarshalBinary(packetBytes); err != nil {
-					panic(err)
-				}
+
+			//			if header.Flags && pdu.FlagReserved1 == 0 {
+			if err := packet.UnmarshalBinary(packetBytes); err != nil {
+				panic(err)
+			}
+			//			} else {
+			// Notify response
+			//			}
 
 			if debug {
 				log.Printf("Received [s:%d,t:%d,p:%d,%s]", header.SessionID, header.TransactionID, header.PacketID, header.Type)
 			}
-			// } else: Notify response
+
 			rx <- &pdu.HeaderPacket{Header: header, Packet: packet}
 		}
 	}()

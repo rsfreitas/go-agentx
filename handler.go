@@ -21,8 +21,8 @@ USA
 package agentx
 
 import (
-	"github.com/vadimipatov/go-agentx/pdu"
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx/pdu"
+	"github.com/rsfreitas/go-agentx/value"
 )
 
 // Handler defines an interface for a handler of events that
@@ -30,4 +30,8 @@ import (
 type Handler interface {
 	Get(value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
 	GetNext(value.OID, bool, value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
+	TestSet(pdu.Variables, *pdu.Header) (pdu.Error, error)
+	CleanupSet(*pdu.Header) (pdu.Error, error)
+	CommitSet(*pdu.Header) (pdu.Error, error)
+	UndoSet(*pdu.Header) (pdu.Error, error)
 }

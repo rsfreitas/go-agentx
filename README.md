@@ -25,9 +25,9 @@ import (
 
 	"gopkg.in/errgo.v1"
 
-	"github.com/vadimipatov/go-agentx"
-	"github.com/vadimipatov/go-agentx/pdu"
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx"
+	"github.com/rsfreitas/go-agentx/pdu"
+	"github.com/rsfreitas/go-agentx/value"
 )
 
 func main() {
@@ -99,7 +99,7 @@ func main() {
 	TrapOID := "1.3.6.1.4.1.45995.3"
 	payload.Add(value.MustParseOID("1.3.6.1.2.1.1.3.0"), pdu.VariableTypeTimeTicks, time.Since(startTime)) // uptime
 	payload.Add(value.MustParseOID("1.3.6.1.6.3.1.1.4.1.0"), pdu.VariableTypeObjectIdentifier, "1.3.6.1.6.3.1.1.4.3.0."+TrapOID) // SNMPTRAP -> ENTERPRISE.OID
-		payload.Add(value.MustParseOID(TrapOID+".11), pdu.VariableTypeInteger, int32(42))
+    payload.Add(value.MustParseOID(TrapOID+".11), pdu.VariableTypeInteger, int32(42))
 
 	if err := session.Notify(payload); err != nil {
 		log.Fatalf(errgo.Details(err))
@@ -113,7 +113,7 @@ func main() {
 
 ## Connection lost
 
-If the connection to the snmp-daemon is lost, the client tries to reconnect. Therefor the property `ReconnectInterval` has be set. It specifies a duration that is waited before a re-connect is tried.
+If the connection to the snmp-daemon is lost, the client tries to reconnect. Therefore the property `ReconnectInterval` has be set. It specifies a duration that is waited before a re-connect is tried.
 If the client has open session or registrations, the client try to re-establish both on a successful re-connect.
 
 ## Known issues
@@ -124,7 +124,6 @@ Unmarshalling of response variables is not working properly and temporarily disa
 
 The implementation was provided by [simia.tech GbR](http://simiatech.com).
 
-
 ## License
 
-The project is licensed under LGPL (see LICENSE file).
+The project is licensed under LGPLv2 (see LICENSE file).

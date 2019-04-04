@@ -24,7 +24,7 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"github.com/vadimipatov/go-agentx/value"
+	"github.com/rsfreitas/go-agentx/value"
 	"gopkg.in/errgo.v1"
 )
 
