@@ -24,6 +24,7 @@ import "fmt"
 
 // The various variable types.
 const (
+	VariableTypeUnknown          VariableType = 0
 	VariableTypeInteger          VariableType = 2
 	VariableTypeOctetString      VariableType = 4
 	VariableTypeNull             VariableType = 5

@@ -187,6 +187,10 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				packet = &pdu.CommitSet{}
 			case pdu.TypeUndoSet:
 				packet = &pdu.UndoSet{}
+			case pdu.TypeOpen:
+				packet = &pdu.Open{}
+			case pdu.TypeClose:
+				packet = &pdu.Close{}
 			default:
 				log.Printf("unhandled packet of type %s", header.Type)
 			}

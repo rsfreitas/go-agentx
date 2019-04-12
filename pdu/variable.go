@@ -180,3 +180,109 @@ func (v *Variable) UnmarshalBinary(data []byte) error {
 
 	return nil
 }
+
+func (v *Variable) UnmarshalBinaryValue(data []byte) error {
+	offset := 0
+
+	switch v.Type {
+	case VariableTypeInteger:
+		v.Value = int32(binary.LittleEndian.Uint32(data[offset:]))
+	case VariableTypeOctetString:
+		octetString := &OctetString{}
+		if err := octetString.UnmarshalBinary(data[offset:]); err != nil {
+			return errgo.Mask(err)
+		}
+		v.Value = octetString.Text
+	case VariableTypeNull, VariableTypeNoSuchObject, VariableTypeNoSuchInstance, VariableTypeEndOfMIBView:
+		v.Value = nil
+	case VariableTypeObjectIdentifier:
+		oid := &ObjectIdentifier{}
+		if err := oid.UnmarshalBinary(data[offset:]); err != nil {
+			return errgo.Mask(err)
+		}
+		v.Value = oid.GetIdentifier()
+	case VariableTypeIPAddress:
+		octetString := &OctetString{}
+		if err := octetString.UnmarshalBinary(data[offset:]); err != nil {
+			return errgo.Mask(err)
+		}
+		v.Value = net.IP(octetString.Text)
+	case VariableTypeCounter32, VariableTypeGauge32:
+		v.Value = binary.LittleEndian.Uint32(data[offset:])
+	case VariableTypeTimeTicks:
+		value := binary.LittleEndian.Uint32(data[offset:])
+		v.Value = time.Duration(value) * time.Second / 100
+	case VariableTypeOpaque:
+		octetString := &OctetString{}
+		if err := octetString.UnmarshalBinary(data[offset:]); err != nil {
+			return errgo.Mask(err)
+		}
+		v.Value = []byte(octetString.Text)
+	case VariableTypeCounter64:
+		v.Value = binary.LittleEndian.Uint64(data[offset:])
+	default:
+		return errgo.Newf("unhandled variable type %s", v.Type)
+	}
+
+	return nil
+}
+
+func (v *Variable) MarshalBinaryValue() ([]byte, error) {
+	buffer := &bytes.Buffer{}
+
+	switch v.Type {
+	case VariableTypeInteger:
+		value := v.Value.(int32)
+		binary.Write(buffer, binary.LittleEndian, &value)
+	case VariableTypeOctetString:
+		octetString := &OctetString{Text: v.Value.(string)}
+		octetStringBytes, err := octetString.MarshalBinary()
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		buffer.Write(octetStringBytes)
+	case VariableTypeNull, VariableTypeNoSuchObject, VariableTypeNoSuchInstance, VariableTypeEndOfMIBView:
+		break
+	case VariableTypeObjectIdentifier:
+		targetOID, err := value.ParseOID(v.Value.(string))
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+
+		oi := &ObjectIdentifier{}
+		oi.SetIdentifier(targetOID)
+		oiBytes, err := oi.MarshalBinary()
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		buffer.Write(oiBytes)
+	case VariableTypeIPAddress:
+		ip := v.Value.(net.IP)
+		octetString := &OctetString{Text: string(ip)}
+		octetStringBytes, err := octetString.MarshalBinary()
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		buffer.Write(octetStringBytes)
+	case VariableTypeCounter32, VariableTypeGauge32:
+		value := v.Value.(uint32)
+		binary.Write(buffer, binary.LittleEndian, &value)
+	case VariableTypeTimeTicks:
+		value := uint32(v.Value.(time.Duration).Seconds() * 100)
+		binary.Write(buffer, binary.LittleEndian, &value)
+	case VariableTypeOpaque:
+		octetString := &OctetString{Text: string(v.Value.([]byte))}
+		octetStringBytes, err := octetString.MarshalBinary()
+		if err != nil {
+			return nil, errgo.Mask(err)
+		}
+		buffer.Write(octetStringBytes)
+	case VariableTypeCounter64:
+		value := v.Value.(uint64)
+		binary.Write(buffer, binary.LittleEndian, &value)
+	default:
+		return nil, errgo.Newf("unhandled variable type %s", v.Type)
+	}
+
+	return buffer.Bytes(), nil
+}
