@@ -28,8 +28,9 @@ import (
 
 // HeaderPacket defines a container structure for a header and a packet.
 type HeaderPacket struct {
-	Header *Header
-	Packet Packet
+	Header  *Header
+	Context *OctetString
+	Packet  Packet
 }
 
 // MarshalBinary returns the pdu packet as a slice of bytes.

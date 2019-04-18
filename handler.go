@@ -28,10 +28,10 @@ import (
 // Handler defines an interface for a handler of events that
 // might occure during a session.
 type Handler interface {
-	Get(value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
-	GetNext(value.OID, bool, value.OID, *pdu.Header) (value.OID, pdu.VariableType, interface{}, error)
-	TestSet(pdu.Variables, *pdu.Header) (pdu.Error, error)
-	CleanupSet(*pdu.Header) (pdu.Error, error)
-	CommitSet(*pdu.Header) (pdu.Error, error)
-	UndoSet(*pdu.Header) (pdu.Error, error)
+	Get(value.OID, *pdu.Header, *pdu.OctetString) (value.OID, pdu.VariableType, interface{}, error)
+	GetNext(value.OID, bool, value.OID, *pdu.Header, *pdu.OctetString) (value.OID, pdu.VariableType, interface{}, error)
+	TestSet(pdu.Variables, *pdu.Header, *pdu.OctetString) (pdu.Error, error)
+	CleanupSet(*pdu.Header, *pdu.OctetString) (pdu.Error, error)
+	CommitSet(*pdu.Header, *pdu.OctetString) (pdu.Error, error)
+	UndoSet(*pdu.Header, *pdu.OctetString) (pdu.Error, error)
 }

@@ -22,6 +22,7 @@ package agentx
 
 import (
 	"bufio"
+	"encoding/binary"
 	"io"
 	"log"
 	"net"
@@ -114,7 +115,10 @@ func (c *Client) runTransmitter() chan *pdu.HeaderPacket {
 				continue
 			}
 			if debug {
-				log.Printf("Transmitted [s:%d,t:%d,p:%d,%s]", headerPacket.Header.SessionID, headerPacket.Header.TransactionID, headerPacket.Header.PacketID, headerPacket.Header.Type)
+				log.Printf("Transmitted [s:%d,t:%d,p:%d,f:%s,%s]",
+					headerPacket.Header.SessionID, headerPacket.Header.TransactionID,
+					headerPacket.Header.PacketID, headerPacket.Header.Flags.String(),
+					headerPacket.Header.Type)
 			}
 		}
 	}()
@@ -171,6 +175,34 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				panic(err)
 			}
 
+			payloadLength := header.PayloadLength
+
+			// Do we have a context to read?
+			if header.Flags&pdu.FlagNonDefaultContext != 0 {
+				l, _ := reader.Peek(4)
+				ctx := &pdu.OctetString{}
+				c := make([]byte, binary.LittleEndian.Uint32(l)+4)
+				n, err := reader.Read(c)
+
+				if err != nil {
+					panic(err)
+				}
+
+				// Parse the context string
+				if err := ctx.UnmarshalBinary(c); err != nil {
+					panic(err)
+				}
+
+				// And discards the padding bytes
+				d, err := reader.Discard(len(ctx.Text) % 4)
+
+				if err != nil {
+					panic(err)
+				}
+
+				payloadLength = (header.PayloadLength - uint32(n) - uint32(d))
+			}
+
 			var packet pdu.Packet
 			switch header.Type {
 			case pdu.TypeResponse:
@@ -195,7 +227,7 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 				log.Printf("unhandled packet of type %s", header.Type)
 			}
 
-			packetBytes := make([]byte, header.PayloadLength)
+			packetBytes := make([]byte, payloadLength)
 			if _, err := reader.Read(packetBytes); err != nil {
 				panic(err)
 			}
@@ -209,7 +241,9 @@ func (c *Client) runReceiver() chan *pdu.HeaderPacket {
 			//			}
 
 			if debug {
-				log.Printf("Received [s:%d,t:%d,p:%d,%s]", header.SessionID, header.TransactionID, header.PacketID, header.Type)
+				log.Printf("Received [s:%d,t:%d,p:%d,f:%s,%s]", header.SessionID,
+					header.TransactionID, header.PacketID, header.Flags.String(),
+					header.Type)
 			}
 
 			rx <- &pdu.HeaderPacket{Header: header, Packet: packet}

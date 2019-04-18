@@ -30,6 +30,16 @@ import (
 	"gopkg.in/errgo.v1"
 )
 
+const (
+	defaultAgentPriority = 127
+)
+
+// RegisterSetup contains attributes of a new desired session
+type RegisterSetup struct {
+	Priority byte
+	Context  string
+}
+
 // Session defines an agentx session.
 type Session struct {
 	Handler Handler
@@ -49,16 +59,28 @@ func (s *Session) ID() uint32 {
 
 // Register registers the client under the provided rootID with the provided priority
 // on the master agent.
-func (s *Session) Register(priority byte, baseOID value.OID) error {
+func (s *Session) Register(baseOID value.OID, attr RegisterSetup) error {
 	if s.registerRequestPacket != nil {
 		return errgo.Newf("session %d is already registered", s.sessionID)
 	}
 
+	priority := byte(defaultAgentPriority)
 	requestPacket := &pdu.Register{}
+	header := &pdu.Header{}
+
+	if attr.Context != "" {
+		requestPacket.Context = &pdu.OctetString{Text: attr.Context}
+		header.Flags = pdu.FlagNonDefaultContext
+	}
+
+	if attr.Priority != 0 {
+		priority = attr.Priority
+	}
+
 	requestPacket.Timeout.Duration = s.timeout
 	requestPacket.Timeout.Priority = priority
 	requestPacket.Subtree.SetIdentifier(baseOID)
-	request := &pdu.HeaderPacket{Header: &pdu.Header{}, Packet: requestPacket}
+	request := &pdu.HeaderPacket{Header: header, Packet: requestPacket}
 
 	response := s.request(request)
 	if err := checkError(response); err != nil {
@@ -153,7 +175,6 @@ func (s *Session) request(hp *pdu.HeaderPacket) *pdu.HeaderPacket {
 }
 
 func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
-
 	responseHeader := &pdu.Header{}
 	responseHeader.SessionID = request.Header.SessionID
 	responseHeader.TransactionID = request.Header.TransactionID
@@ -166,7 +187,9 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 			responsePacket.Variables.Add(requestPacket.GetOID(), pdu.VariableTypeNull, nil)
 		} else {
-			oid, t, v, err := s.Handler.Get(requestPacket.GetOID(), request.Header)
+			oid, t, v, err := s.Handler.Get(requestPacket.GetOID(), request.Header,
+				request.Context)
+
 			if err != nil {
 				log.Printf("error while handling packet: %s", errgo.Details(err))
 				responsePacket.Error = pdu.ErrorProcessing
@@ -182,7 +205,10 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
 			for _, sr := range requestPacket.SearchRanges {
-				oid, t, v, err := s.Handler.GetNext(sr.From.GetIdentifier(), (sr.From.Include == 1), sr.To.GetIdentifier(), request.Header)
+				oid, t, v, err := s.Handler.GetNext(sr.From.GetIdentifier(),
+					(sr.From.Include == 1), sr.To.GetIdentifier(), request.Header,
+					request.Context)
+
 				if err != nil {
 					log.Printf("error while handling packet: %s", errgo.Details(err))
 					responsePacket.Error = pdu.ErrorProcessing
@@ -200,7 +226,8 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		if s.Handler == nil {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
-			reply, err := s.Handler.TestSet(requestPacket.Variables(), request.Header)
+			reply, err := s.Handler.TestSet(requestPacket.Variables(), request.Header,
+				request.Context)
 
 			if err != nil {
 				log.Printf("error while handling packet: %s", errgo.Details(err))
@@ -214,7 +241,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		if s.Handler == nil {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
-			reply, err := s.Handler.CleanupSet(request.Header)
+			reply, err := s.Handler.CleanupSet(request.Header, request.Context)
 
 			if err != nil {
 				log.Printf("error while handling packet: %s", errgo.Details(err))
@@ -228,7 +255,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		if s.Handler == nil {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
-			reply, err := s.Handler.CommitSet(request.Header)
+			reply, err := s.Handler.CommitSet(request.Header, request.Context)
 
 			if err != nil {
 				log.Printf("error while handling packet: %s", errgo.Details(err))
@@ -242,7 +269,7 @@ func (s *Session) handle(request *pdu.HeaderPacket) *pdu.HeaderPacket {
 		if s.Handler == nil {
 			log.Printf("warning: no handler for session %d specified", s.sessionID)
 		} else {
-			reply, err := s.Handler.UndoSet(request.Header)
+			reply, err := s.Handler.UndoSet(request.Header, request.Context)
 
 			if err != nil {
 				log.Printf("error while handling packet: %s", errgo.Details(err))

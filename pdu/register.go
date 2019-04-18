@@ -28,6 +28,7 @@ import (
 // Register defines the pdu register packet.
 type Register struct {
 	Timeout Timeout
+	Context *OctetString
 	Subtree ObjectIdentifier
 }
 
@@ -38,7 +39,13 @@ func (r *Register) Type() Type {
 
 // MarshalBinary returns the pdu packet as a slice of bytes.
 func (r *Register) MarshalBinary() ([]byte, error) {
-	combined := marshaler.NewMulti(&r.Timeout, &r.Subtree)
+	var combined marshaler.Multi
+
+	if r.Context == nil {
+		combined = marshaler.NewMulti(&r.Timeout, &r.Subtree)
+	} else {
+		combined = marshaler.NewMulti(r.Context, &r.Timeout, &r.Subtree)
+	}
 
 	combinedBytes, err := combined.MarshalBinary()
 	if err != nil {
